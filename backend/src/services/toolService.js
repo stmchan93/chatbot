@@ -79,21 +79,21 @@ async function checkAvailability({ doctor_id, date, duration }) {
     `)
     .all(doctor_id, date);
 
-  // Generate available slots
+  // Generate available slots (working in UTC)
   const availableSlots = [];
-  const targetDate = new Date(date);
+  const targetDate = new Date(date + 'T00:00:00.000Z');
   const BUSINESS_START_HOUR = 8;
   const BUSINESS_END_HOUR = 17;
   
   for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour++) {
     for (let minute = 0; minute < 60; minute += 30) {
       const slotStart = new Date(targetDate);
-      slotStart.setHours(hour, minute, 0, 0);
+      slotStart.setUTCHours(hour, minute, 0, 0);
       
       const slotEnd = new Date(slotStart);
-      slotEnd.setMinutes(slotEnd.getMinutes() + duration);
+      slotEnd.setUTCMinutes(slotEnd.getUTCMinutes() + duration);
 
-      if (slotEnd.getHours() >= BUSINESS_END_HOUR) {
+      if (slotEnd.getUTCHours() >= BUSINESS_END_HOUR) {
         continue;
       }
 
@@ -101,11 +101,10 @@ async function checkAvailability({ doctor_id, date, duration }) {
         const aptStart = new Date(apt.start_time);
         const aptEnd = new Date(apt.end_time);
         
-        return (
-          (slotStart >= aptStart && slotStart < aptEnd) ||
-          (slotEnd > aptStart && slotEnd <= aptEnd) ||
-          (slotStart <= aptStart && slotEnd >= aptEnd)
-        );
+        // Two time ranges overlap if:
+        // - Slot starts before appointment ends AND
+        // - Slot ends after appointment starts
+        return slotStart < aptEnd && slotEnd > aptStart;
       });
 
       if (!hasConflict) {

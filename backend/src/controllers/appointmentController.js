@@ -38,18 +38,19 @@ export function getAvailability(req, res) {
 
     // Generate all possible time slots
     const availableSlots = [];
-    const targetDate = new Date(date);
+    // Parse date and work in UTC to match database timestamps
+    const targetDate = new Date(date + 'T00:00:00.000Z');
     
     for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const slotStart = new Date(targetDate);
-        slotStart.setHours(hour, minute, 0, 0);
+        slotStart.setUTCHours(hour, minute, 0, 0);
         
         const slotEnd = new Date(slotStart);
-        slotEnd.setMinutes(slotEnd.getMinutes() + durationNum);
+        slotEnd.setUTCMinutes(slotEnd.getUTCMinutes() + durationNum);
 
-        // Check if slot end is within business hours
-        if (slotEnd.getHours() >= BUSINESS_END_HOUR) {
+        // Check if slot end is within business hours (using UTC)
+        if (slotEnd.getUTCHours() >= BUSINESS_END_HOUR) {
           continue;
         }
 
@@ -58,12 +59,11 @@ export function getAvailability(req, res) {
           const aptStart = new Date(apt.start_time);
           const aptEnd = new Date(apt.end_time);
           
-          // Check for overlap
-          return (
-            (slotStart >= aptStart && slotStart < aptEnd) ||
-            (slotEnd > aptStart && slotEnd <= aptEnd) ||
-            (slotStart <= aptStart && slotEnd >= aptEnd)
-          );
+          // Two time ranges overlap if:
+          // - Slot starts before appointment ends AND
+          // - Slot ends after appointment starts
+          // This catches ALL overlap cases including partial overlaps
+          return slotStart < aptEnd && slotEnd > aptStart;
         });
 
         if (!hasConflict) {
@@ -105,25 +105,18 @@ export function scheduleAppointment(req, res) {
       });
     }
 
-    // Check for conflicts
+    // Check for conflicts using simple overlap logic:
+    // Two appointments overlap if one starts before the other ends AND ends after the other starts
     const conflicts = sqliteDb
       .prepare(`
         SELECT id
         FROM appointments
         WHERE doctor_id = ?
           AND status = 'scheduled'
-          AND (
-            (start_time < ? AND end_time > ?) OR
-            (start_time < ? AND end_time > ?) OR
-            (start_time >= ? AND end_time <= ?)
-          )
+          AND start_time < ?
+          AND end_time > ?
       `)
-      .all(
-        doctor_id,
-        end_time, start_time,
-        end_time, start_time,
-        start_time, end_time
-      );
+      .all(doctor_id, end_time, start_time);
 
     if (conflicts.length > 0) {
       return res.status(409).json({
