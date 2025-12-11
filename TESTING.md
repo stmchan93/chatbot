@@ -286,9 +286,18 @@ Verify that the system prevents double-booking and suggests alternative times.
 
 *Document any issues discovered during testing:*
 
-1. 
+1. **Fixed - Timezone standardization to PST** (Dec 11, 2025)
+   - Issue: Times were inconsistent between booking (LLM), storage (database), and display (calendar)
+   - Root cause: Mixed UTC and local timezone handling causing confusion (e.g., 4pm booking showed as 5am)
+   - Fix: Standardized entire system to PST - all times stored/displayed as Pacific Time without timezone conversion
+   - Implementation: Custom `toPSTString()` function removes UTC indicator, business hours are PST 8am-5pm
+   - Status: ✅ Resolved
 
-2. 
+2. **Fixed - Overlap detection for appointments** (Dec 11, 2025)
+   - Issue: Overlapping slots shown as available (e.g., 1:30-2:30pm available when 2-3pm booked)
+   - Root cause: Complex 3-condition overlap logic had edge case bugs
+   - Fix: Simplified to mathematical standard: `slotStart < aptEnd && slotEnd > aptStart`
+   - Status: ✅ Resolved
 
 3. 
 

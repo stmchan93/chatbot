@@ -6,6 +6,17 @@ const BUSINESS_END_HOUR = 17;
 const VALID_DURATIONS = [30, 60];
 const VALID_TYPES = ['consultation', 'follow-up', 'emergency'];
 
+// Helper function to format date as PST string (without UTC conversion)
+function toPSTString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
 export function getAvailability(req, res) {
   try {
     const { doctor_id, date, duration } = req.query;
@@ -36,21 +47,20 @@ export function getAvailability(req, res) {
       `)
       .all(doctor_id, date);
 
-    // Generate all possible time slots
+    // Generate all possible time slots (in PST/local timezone)
     const availableSlots = [];
-    // Parse date and work in UTC to match database timestamps
-    const targetDate = new Date(date + 'T00:00:00.000Z');
+    const targetDate = new Date(date + 'T00:00:00');
     
     for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const slotStart = new Date(targetDate);
-        slotStart.setUTCHours(hour, minute, 0, 0);
+        slotStart.setHours(hour, minute, 0, 0);
         
         const slotEnd = new Date(slotStart);
-        slotEnd.setUTCMinutes(slotEnd.getUTCMinutes() + durationNum);
+        slotEnd.setMinutes(slotEnd.getMinutes() + durationNum);
 
-        // Check if slot end is within business hours (using UTC)
-        if (slotEnd.getUTCHours() >= BUSINESS_END_HOUR) {
+        // Check if slot end is within business hours
+        if (slotEnd.getHours() >= BUSINESS_END_HOUR) {
           continue;
         }
 
@@ -68,8 +78,8 @@ export function getAvailability(req, res) {
 
         if (!hasConflict) {
           availableSlots.push({
-            start_time: slotStart.toISOString(),
-            end_time: slotEnd.toISOString()
+            start_time: toPSTString(slotStart),
+            end_time: toPSTString(slotEnd)
           });
         }
       }

@@ -1,5 +1,16 @@
 import { sqliteDb, getMongoDb } from '../config/database.js';
 
+// Helper function to format date as PST string (without UTC conversion)
+function toPSTString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
 /**
  * Execute a tool call from Claude
  * @param {string} toolName - Name of the tool to execute
@@ -79,21 +90,21 @@ async function checkAvailability({ doctor_id, date, duration }) {
     `)
     .all(doctor_id, date);
 
-  // Generate available slots (working in UTC)
+  // Generate available slots (in PST/local timezone)
   const availableSlots = [];
-  const targetDate = new Date(date + 'T00:00:00.000Z');
+  const targetDate = new Date(date + 'T00:00:00');
   const BUSINESS_START_HOUR = 8;
   const BUSINESS_END_HOUR = 17;
   
   for (let hour = BUSINESS_START_HOUR; hour < BUSINESS_END_HOUR; hour++) {
     for (let minute = 0; minute < 60; minute += 30) {
       const slotStart = new Date(targetDate);
-      slotStart.setUTCHours(hour, minute, 0, 0);
+      slotStart.setHours(hour, minute, 0, 0);
       
       const slotEnd = new Date(slotStart);
-      slotEnd.setUTCMinutes(slotEnd.getUTCMinutes() + duration);
+      slotEnd.setMinutes(slotEnd.getMinutes() + duration);
 
-      if (slotEnd.getUTCHours() >= BUSINESS_END_HOUR) {
+      if (slotEnd.getHours() >= BUSINESS_END_HOUR) {
         continue;
       }
 
@@ -109,8 +120,8 @@ async function checkAvailability({ doctor_id, date, duration }) {
 
       if (!hasConflict) {
         availableSlots.push({
-          start_time: slotStart.toISOString(),
-          end_time: slotEnd.toISOString()
+          start_time: toPSTString(slotStart),
+          end_time: toPSTString(slotEnd)
         });
       }
     }
