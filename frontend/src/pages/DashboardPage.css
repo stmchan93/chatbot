@@ -15,9 +15,6 @@
 }
 
 .dashboard-header-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 20px;
 }
 
@@ -25,33 +22,6 @@
   margin: 0;
   color: #333;
   font-size: 1.8em;
-}
-
-.view-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.view-btn {
-  padding: 8px 20px;
-  border: 2px solid #667eea;
-  background: white;
-  color: #667eea;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.95em;
-  font-weight: 500;
-  transition: all 0.3s;
-}
-
-.view-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
-}
-
-.view-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: #667eea;
 }
 
 .calendar-wrapper {

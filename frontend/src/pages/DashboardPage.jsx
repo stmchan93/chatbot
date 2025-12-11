@@ -154,20 +154,6 @@ function DashboardPage() {
       <div className="dashboard-container">
         <div className="dashboard-header-controls">
           <h2>My Appointments</h2>
-          <div className="view-controls">
-            <button 
-              className={`view-btn ${view === 'week' ? 'active' : ''}`}
-              onClick={() => handleViewChange('week')}
-            >
-              Week
-            </button>
-            <button 
-              className={`view-btn ${view === 'month' ? 'active' : ''}`}
-              onClick={() => handleViewChange('month')}
-            >
-              Month
-            </button>
-          </div>
         </div>
 
         {loading ? (
@@ -191,10 +177,10 @@ function DashboardPage() {
               eventPropGetter={eventStyleGetter}
               views={['week', 'month']}
               step={30}
-              showMultiDayTimes
+              timeslots={2}
               defaultDate={new Date()}
-              min={new Date(2025, 0, 1, 8, 0)} // 8 AM
-              max={new Date(2025, 0, 1, 17, 0)} // 5 PM
+              min={new Date(1970, 0, 1, 8, 0, 0)} // 8 AM
+              max={new Date(1970, 0, 1, 17, 0, 0)} // 5 PM
             />
           </div>
         )}
