@@ -11,6 +11,26 @@ function toPSTString(date) {
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }
 
+// Helper function to add PST timezone offset to stored PST time string
+function addPSTOffset(timeString) {
+  // timeString is like "2025-12-16T15:30:00" (PST but no timezone indicator)
+  // Return "2025-12-16T15:30:00-08:00" (explicitly PST)
+  if (!timeString) return timeString;
+  
+  // If it has a Z suffix, it's from old UTC-based appointments
+  // Convert from UTC to PST by parsing and reformatting
+  if (timeString.includes('Z')) {
+    const utcDate = new Date(timeString);
+    return toPSTString(utcDate) + '-08:00';
+  }
+  
+  // Only add offset if not already present
+  if (timeString.includes('-08:00') || timeString.includes('+')) {
+    return timeString;
+  }
+  return timeString + '-08:00';
+}
+
 /**
  * Execute a tool call from Claude
  * @param {string} toolName - Name of the tool to execute
@@ -253,5 +273,12 @@ function getPatientAppointments(patientId) {
     `)
     .all(patientId);
 
-  return { appointments };
+  // Add PST timezone offset to time strings for correct interpretation
+  const appointmentsWithTimezone = appointments.map(apt => ({
+    ...apt,
+    start_time: addPSTOffset(apt.start_time),
+    end_time: addPSTOffset(apt.end_time)
+  }));
+
+  return { appointments: appointmentsWithTimezone };
 }
