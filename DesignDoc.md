@@ -541,13 +541,13 @@ LoginPage (simple user selector for MVP)
 - [x] Handle tool call responses (confirmations, etc.)
 - [x] Add loading states
 
-### Phase 6: Frontend - Doctor Dashboard
-- [ ] Create doctor login flow
-- [ ] Integrate react-big-calendar
-- [ ] Fetch and display appointments
-- [ ] Implement calendar navigation (week/month views)
-- [ ] Create appointment detail modal
-- [ ] Add filtering capabilities
+### Phase 6: Frontend - Doctor Dashboard ✅
+- [x] Create doctor login flow
+- [x] Integrate react-big-calendar
+- [x] Fetch and display appointments
+- [x] Implement calendar navigation (week/month views)
+- [x] Create appointment detail modal
+- [x] Add filtering capabilities
 
 ### Phase 7: Integration & Testing
 - [ ] End-to-end testing of booking flow
